@@ -17,7 +17,7 @@ export default function Home() {
 
   const handleAnalyze = () => {
     if (!feedback.trim()) return;
-    mutation.mutate({ feedback, productContext });
+    mutation.mutate({ data: { feedback, productContext: productContext || undefined } });
   };
 
   const handleClear = () => {

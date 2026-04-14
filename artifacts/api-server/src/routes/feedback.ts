@@ -74,7 +74,12 @@ Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(block.text);
+      const raw = block.text.trim();
+      const stripped = raw
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```\s*$/, "")
+        .trim();
+      parsed = JSON.parse(stripped);
     } catch {
       req.log.error({ text: block.text }, "Failed to parse AI JSON response");
       res.status(500).json({ error: "AI returned malformed JSON. Please try again." });

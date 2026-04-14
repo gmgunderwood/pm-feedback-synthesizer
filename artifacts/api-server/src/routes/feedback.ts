@@ -1,6 +1,12 @@
 import { Router } from "express";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
+import Anthropic from "@anthropic-ai/sdk";
 import { AnalyzeFeedbackBody } from "@workspace/api-zod";
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  throw new Error("ANTHROPIC_API_KEY must be set.");
+}
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const feedbackRouter = Router();
 
@@ -58,11 +64,9 @@ Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-4-5",
       max_tokens: 8192,
-      messages: [
-        { role: "user", content: userMessage }
-      ],
+      messages: [{ role: "user", content: userMessage }],
       system: systemPrompt,
     });
 

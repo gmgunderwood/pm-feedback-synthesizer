@@ -6,4 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./analyzeFeedbackBody";
+export * from "./apiError";
+export * from "./feedbackAnalysis";
+export * from "./feedbackSummary";
+export * from "./feedbackSummaryOverallSentiment";
+export * from "./feedbackTheme";
+export * from "./feedbackThemePriority";
+export * from "./feedbackThemeSentiment";
 export * from "./healthStatus";

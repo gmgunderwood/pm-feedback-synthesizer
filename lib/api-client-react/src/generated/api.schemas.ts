@@ -8,3 +8,70 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ApiError {
+  error: string;
+}
+
+export interface AnalyzeFeedbackBody {
+  /** The raw user feedback text to analyze */
+  feedback: string;
+  /** Optional product context to help Claude understand the domain */
+  productContext?: string;
+}
+
+export type FeedbackThemeSentiment =
+  (typeof FeedbackThemeSentiment)[keyof typeof FeedbackThemeSentiment];
+
+export const FeedbackThemeSentiment = {
+  positive: "positive",
+  negative: "negative",
+  neutral: "neutral",
+  mixed: "mixed",
+} as const;
+
+export type FeedbackThemePriority =
+  (typeof FeedbackThemePriority)[keyof typeof FeedbackThemePriority];
+
+export const FeedbackThemePriority = {
+  critical: "critical",
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
+
+export interface FeedbackTheme {
+  name: string;
+  description: string;
+  occurrences: number;
+  quotes: string[];
+  sentiment: FeedbackThemeSentiment;
+  priority: FeedbackThemePriority;
+}
+
+export type FeedbackSummaryOverallSentiment =
+  (typeof FeedbackSummaryOverallSentiment)[keyof typeof FeedbackSummaryOverallSentiment];
+
+export const FeedbackSummaryOverallSentiment = {
+  positive: "positive",
+  negative: "negative",
+  neutral: "neutral",
+  mixed: "mixed",
+} as const;
+
+export interface FeedbackSummary {
+  overallSentiment: FeedbackSummaryOverallSentiment;
+  /** Sentiment score from -1 (very negative) to 1 (very positive) */
+  sentimentScore: number;
+  totalThemes: number;
+  criticalIssues: number;
+  keyStrengths: string[];
+  keyWeaknesses: string[];
+  recommendedActions: string[];
+  executiveSummary: string;
+}
+
+export interface FeedbackAnalysis {
+  themes: FeedbackTheme[];
+  summary: FeedbackSummary;
+}

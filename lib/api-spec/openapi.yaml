@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: feedback
+    description: Feedback synthesis operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /feedback/analyze:
+    post:
+      operationId: analyzeFeedback
+      tags: [feedback]
+      summary: Analyze user feedback text
+      description: Sends feedback to Claude and returns structured analysis with themes, sentiment, and priority levels
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeFeedbackBody"
+      responses:
+        "200":
+          description: Structured feedback analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackAnalysis"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,95 @@ components:
           type: string
       required:
         - status
-
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    AnalyzeFeedbackBody:
+      type: object
+      properties:
+        feedback:
+          type: string
+          description: The raw user feedback text to analyze
+        productContext:
+          type: string
+          description: Optional product context to help Claude understand the domain
+      required:
+        - feedback
+    FeedbackTheme:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        occurrences:
+          type: integer
+        quotes:
+          type: array
+          items:
+            type: string
+        sentiment:
+          type: string
+          enum: [positive, negative, neutral, mixed]
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+      required:
+        - name
+        - description
+        - occurrences
+        - quotes
+        - sentiment
+        - priority
+    FeedbackSummary:
+      type: object
+      properties:
+        overallSentiment:
+          type: string
+          enum: [positive, negative, neutral, mixed]
+        sentimentScore:
+          type: number
+          description: Sentiment score from -1 (very negative) to 1 (very positive)
+        totalThemes:
+          type: integer
+        criticalIssues:
+          type: integer
+        keyStrengths:
+          type: array
+          items:
+            type: string
+        keyWeaknesses:
+          type: array
+          items:
+            type: string
+        recommendedActions:
+          type: array
+          items:
+            type: string
+        executiveSummary:
+          type: string
+      required:
+        - overallSentiment
+        - sentimentScore
+        - totalThemes
+        - criticalIssues
+        - keyStrengths
+        - keyWeaknesses
+        - recommendedActions
+        - executiveSummary
+    FeedbackAnalysis:
+      type: object
+      properties:
+        themes:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedbackTheme"
+        summary:
+          $ref: "#/components/schemas/FeedbackSummary"
+      required:
+        - themes
+        - summary

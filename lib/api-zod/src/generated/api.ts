@@ -14,3 +14,40 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Sends feedback to Claude and returns structured analysis with themes, sentiment, and priority levels
+ * @summary Analyze user feedback text
+ */
+export const AnalyzeFeedbackBody = zod.object({
+  feedback: zod.string().describe("The raw user feedback text to analyze"),
+  productContext: zod
+    .string()
+    .optional()
+    .describe("Optional product context to help Claude understand the domain"),
+});
+
+export const AnalyzeFeedbackResponse = zod.object({
+  themes: zod.array(
+    zod.object({
+      name: zod.string(),
+      description: zod.string(),
+      occurrences: zod.number(),
+      quotes: zod.array(zod.string()),
+      sentiment: zod.enum(["positive", "negative", "neutral", "mixed"]),
+      priority: zod.enum(["critical", "high", "medium", "low"]),
+    }),
+  ),
+  summary: zod.object({
+    overallSentiment: zod.enum(["positive", "negative", "neutral", "mixed"]),
+    sentimentScore: zod
+      .number()
+      .describe("Sentiment score from -1 (very negative) to 1 (very positive)"),
+    totalThemes: zod.number(),
+    criticalIssues: zod.number(),
+    keyStrengths: zod.array(zod.string()),
+    keyWeaknesses: zod.array(zod.string()),
+    recommendedActions: zod.array(zod.string()),
+    executiveSummary: zod.string(),
+  }),
+});

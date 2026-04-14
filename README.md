@@ -11,4 +11,4 @@ Paste any user feedback — App Store reviews, support tickets, NPS comments, or
 - Vanilla HTML/CSS/JS frontend
 - Deployed on Replit
 ## Live demo
-(paste your Replit URL here)
+https://feedback-synthesizer--gmgunderwood.replit.app

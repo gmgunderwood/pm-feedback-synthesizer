@@ -7,7 +7,20 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BrainCircuit, CheckCircle2, ChevronRight, AlertCircle, TrendingUp, XCircle, Loader2 } from "lucide-react";
+
+function getErrorMessage(error: Error): string {
+  const message = error.message.trim();
+  if (!message) return "Something went wrong while analyzing feedback. Please try again.";
+
+  const httpPrefix = message.match(/^HTTP \d{3}[^:]*:\s*/);
+  if (httpPrefix) {
+    return message.slice(httpPrefix[0].length);
+  }
+
+  return message;
+}
 
 export default function Home() {
   const [feedback, setFeedback] = useState("");
@@ -104,6 +117,17 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {/* Error State */}
+        {mutation.isError && (
+          <Alert variant="destructive" data-testid="alert-error">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Analysis failed</AlertTitle>
+            <AlertDescription>
+              {getErrorMessage(mutation.error)}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Loading State */}
         {mutation.isPending && (
           <div className="py-16 flex flex-col items-center justify-center space-y-6 text-slate-500 animate-in fade-in duration-500">
@@ -119,7 +143,7 @@ export default function Home() {
         )}
 
         {/* Results Section */}
-        {mutation.data && (
+        {mutation.isSuccess && mutation.data && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-700" data-testid="section-results">
             
             {/* Executive Summary */}

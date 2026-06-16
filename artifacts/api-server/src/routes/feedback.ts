@@ -1,6 +1,35 @@
 import { Router } from "express";
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { AnalyzeFeedbackBody } from "@workspace/api-zod";
+
+function getAnthropicErrorMessage(err: unknown): string {
+  if (err instanceof APIError) {
+    if (err.status === 401) {
+      return "AI service authentication failed. Please check the API key configuration.";
+    }
+    if (err.status === 429) {
+      return "The AI service is rate-limited. Please wait a moment and try again.";
+    }
+    if (err.status === 529) {
+      return "The AI service is temporarily overloaded. Please try again in a few minutes.";
+    }
+    if (err.status && err.status >= 500) {
+      return "The AI service is temporarily unavailable. Please try again later.";
+    }
+    if (err.message) {
+      return err.message;
+    }
+  }
+
+  if (err instanceof Error) {
+    if (err.message.includes("fetch failed") || err.message.includes("ECONNREFUSED")) {
+      return "Could not reach the AI service. Please check your network connection and try again.";
+    }
+    return err.message;
+  }
+
+  return "Failed to analyze feedback. Please try again.";
+}
 
 if (!process.env.ANTHROPIC_API_KEY) {
   throw new Error("ANTHROPIC_API_KEY must be set.");
@@ -93,7 +122,7 @@ Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
     res.json(parsed);
   } catch (err) {
     req.log.error({ err }, "Anthropic API error");
-    res.status(500).json({ error: "Failed to analyze feedback. Please try again." });
+    res.status(500).json({ error: getAnthropicErrorMessage(err) });
   }
 });
 

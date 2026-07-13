@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
+import { Pinecone } from "@pinecone-database/pinecone";
 import { AnalyzeFeedbackBody } from "@workspace/api-zod";
 
 function getAnthropicErrorMessage(err: unknown): string {
@@ -51,6 +52,25 @@ feedbackRouter.post("/feedback/analyze", async (req, res) => {
   if (!feedback || feedback.trim().length === 0) {
     res.status(400).json({ error: "Feedback text cannot be empty" });
     return;
+  }
+
+  try {
+    if (!process.env.PINECONE_API_KEY) {
+      req.log.error("PINECONE_API_KEY is not set; skipping Pinecone ingestion");
+    } else {
+      const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+      const index = pc.index("pm-feedback-test").namespace("feedback");
+      await index.upsertRecords({
+        records: [
+          {
+            _id: Date.now().toString(),
+            chunk_text: feedback,
+          },
+        ],
+      });
+    }
+  } catch (err) {
+    req.log.error({ err }, "Pinecone ingestion failed");
   }
 
   const systemPrompt = `You are a senior product manager analyzing user feedback. Your job is to extract structured insights from raw user feedback text.

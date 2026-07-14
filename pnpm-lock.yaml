@@ -156,6 +156,13 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      '@pinecone-database/pinecone':
+        specifier: ^8.0.0
+        version: 8.0.0
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
     devDependencies:
       prettier:
         specifier: ^3.8.1
@@ -169,6 +176,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.78.0
         version: 0.78.0(zod@4.3.6)
+      '@pinecone-database/pinecone':
+        specifier: ^8.0.0
+        version: 8.0.0
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
@@ -861,6 +871,10 @@ packages:
 
   '@orval/zod@8.5.3':
     resolution: {integrity: sha512-qcbnpGE0VrgCDm0hNWQSOmzbfgdnr1xo+PYQ3PJjxfLuk3kGdJmFANTr53/1lI3sZUvWZwX5nKJCLWVxvwJEgg==}
+
+  '@pinecone-database/pinecone@8.0.0':
+    resolution: {integrity: sha512-dItFqLdis2Pd5lC67aKn8HhvXajzlOz4+0RyK1CRcZMdSwG8YxUCBtH4yXPC8/6uLxfr2dvMWnRFuKgtPwwajQ==}
+    engines: {node: '>=20.0.0'}
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
@@ -1972,6 +1986,10 @@ packages:
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
 
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+    engines: {node: '>=12'}
+
   drizzle-kit@0.31.9:
     resolution: {integrity: sha512-GViD3IgsXn7trFyBUUHyTFBpH/FsHTxYJ66qdbVggxef4UBPHRYxQaRzYLTuekYnk9i5FIEL9pbBIwMqX/Uwrg==}
     hasBin: true
@@ -2846,6 +2864,7 @@ packages:
   recharts@2.15.4:
     resolution: {integrity: sha512-UT/q6fwS3c1dHbXv2uFgYJ9BMFHu3fwnd7AYZaEQhXuYQ4hgsxLvsUXzGdKeZrW5xopzDCvuA2N41WJ88I7zIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -3016,6 +3035,7 @@ packages:
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
+    deprecated: unmaintained
     hasBin: true
     peerDependencies:
       typescript: ^5.0.0
@@ -3510,6 +3530,8 @@ snapshots:
       - '@faker-js/faker'
       - supports-color
       - typescript
+
+  '@pinecone-database/pinecone@8.0.0': {}
 
   '@pinojs/redact@0.4.0': {}
 
@@ -4664,6 +4686,8 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.28.6
       csstype: 3.2.3
+
+  dotenv@17.4.2: {}
 
   drizzle-kit@0.31.9:
     dependencies:

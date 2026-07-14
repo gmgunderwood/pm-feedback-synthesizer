@@ -73,6 +73,27 @@ feedbackRouter.post("/feedback/analyze", async (req, res) => {
     req.log.error({ err }, "Pinecone ingestion failed");
   }
 
+  let similarEntries: string[] = [];
+  try {
+    if (!process.env.PINECONE_API_KEY) {
+      req.log.error("PINECONE_API_KEY is not set; skipping Pinecone retrieval");
+    } else {
+      const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+      const index = pc.index("pm-feedback-test").namespace("feedback");
+      const results = await index.searchRecords({
+        query: { inputs: { text: feedback }, topK: 3 },
+        fields: ["chunk_text"],
+      });
+      similarEntries = results.result.hits
+        .filter((hit) => hit._score > 0.85)
+        .map((hit) => (hit.fields as { chunk_text?: string }).chunk_text)
+        .filter((text): text is string => typeof text === "string");
+    }
+  } catch (err) {
+    req.log.error({ err }, "Pinecone retrieval failed");
+    similarEntries = [];
+  }
+
   const systemPrompt = `You are a senior product manager analyzing user feedback. Your job is to extract structured insights from raw user feedback text.
 
 Analyze the provided feedback and return a JSON response with the following exact structure:
@@ -107,9 +128,14 @@ Priority guidelines:
 
 Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
 
-  const userMessage = productContext
+  const baseUserMessage = productContext
     ? `Product context: ${productContext}\n\nUser feedback to analyze:\n${feedback}`
     : `User feedback to analyze:\n${feedback}`;
+
+  const userMessage =
+    similarEntries.length > 0
+      ? `${baseUserMessage}\n\nSimilar past feedback for context:\n${similarEntries.join("\n")}\n\nUse the similar past feedback as context if relevant. Do not invent patterns that are not present in the data.`
+      : baseUserMessage;
 
   try {
     const message = await anthropic.messages.create({

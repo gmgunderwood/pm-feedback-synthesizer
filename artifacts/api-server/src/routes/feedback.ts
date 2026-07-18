@@ -38,6 +38,34 @@ if (!process.env.ANTHROPIC_API_KEY) {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const CHUNK_WORD_THRESHOLD = 100;
+const CHUNK_SIZE_WORDS = 50;
+const CHUNK_OVERLAP_WORDS = 10;
+
+/**
+ * Conditional chunking, per the Week 5 retrieval strategy decision
+ * (RETRIEVAL_STRATEGY.md): entries over ~100 words get split into
+ * overlapping 50-word chunks; shorter entries stay as a single whole
+ * chunk, unchanged from before. This prevents a long, multi-topic entry
+ * from being embedded as one diluted vector that matches poorly against
+ * any single-topic future query.
+ */
+function chunkFeedback(text: string): string[] {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= CHUNK_WORD_THRESHOLD) {
+    return [text];
+  }
+
+  const chunks: string[] = [];
+  const step = CHUNK_SIZE_WORDS - CHUNK_OVERLAP_WORDS;
+  for (let start = 0; start < words.length; start += step) {
+    const chunkWords = words.slice(start, start + CHUNK_SIZE_WORDS);
+    chunks.push(chunkWords.join(" "));
+    if (start + CHUNK_SIZE_WORDS >= words.length) break;
+  }
+  return chunks;
+}
+
 const feedbackRouter = Router();
 
 feedbackRouter.post("/feedback/analyze", async (req, res) => {
@@ -52,25 +80,6 @@ feedbackRouter.post("/feedback/analyze", async (req, res) => {
   if (!feedback || feedback.trim().length === 0) {
     res.status(400).json({ error: "Feedback text cannot be empty" });
     return;
-  }
-
-  try {
-    if (!process.env.PINECONE_API_KEY) {
-      req.log.error("PINECONE_API_KEY is not set; skipping Pinecone ingestion");
-    } else {
-      const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
-      const index = pc.index("pm-feedback-test").namespace("feedback");
-      await index.upsertRecords({
-        records: [
-          {
-            _id: Date.now().toString(),
-            chunk_text: feedback,
-          },
-        ],
-      });
-    }
-  } catch (err) {
-    req.log.error({ err }, "Pinecone ingestion failed");
   }
 
   let similarEntries: string[] = [];
@@ -93,6 +102,29 @@ feedbackRouter.post("/feedback/analyze", async (req, res) => {
     req.log.error({ err }, "Pinecone retrieval failed");
     similarEntries = [];
   }
+
+  try {
+    if (!process.env.PINECONE_API_KEY) {
+      req.log.error("PINECONE_API_KEY is not set; skipping Pinecone ingestion");
+    } else {
+      const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+      const index = pc.index("pm-feedback-test").namespace("feedback");
+      const chunks = chunkFeedback(feedback);
+      const baseId = Date.now().toString();
+      await index.upsertRecords({
+        records: chunks.map((chunkText, i) => ({
+          _id: chunks.length > 1 ? `${baseId}_${i}` : baseId,
+          chunk_text: chunkText,
+        })),
+      });
+      if (chunks.length > 1) {
+        req.log.info({ chunkCount: chunks.length }, "Feedback split into chunks before ingestion");
+      }
+    }
+  } catch (err) {
+    req.log.error({ err }, "Pinecone ingestion failed");
+  }
+
 
   const systemPrompt = `You are a senior product manager analyzing user feedback. Your job is to extract structured insights from raw user feedback text.
 
@@ -132,9 +164,11 @@ Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
     ? `Product context: ${productContext}\n\nUser feedback to analyze:\n${feedback}`
     : `User feedback to analyze:\n${feedback}`;
 
-  const userMessage =
+    const userMessage =
     similarEntries.length > 0
-      ? `${baseUserMessage}\n\nSimilar past feedback for context:\n${similarEntries.join("\n")}\n\nUse the similar past feedback as context if relevant. Do not invent patterns that are not present in the data.`
+      ? `${baseUserMessage}\n\nSimilar past feedback for context (${similarEntries.length} ${similarEntries.length === 1 ? "entry" : "entries"} retrieved):\n${similarEntries
+          .map((entry, i) => `[${i + 1}] ${entry}`)
+          .join("\n")}\n\nUse the similar past feedback as context if relevant. Do not invent patterns that are not present in the data.`
       : baseUserMessage;
 
   try {

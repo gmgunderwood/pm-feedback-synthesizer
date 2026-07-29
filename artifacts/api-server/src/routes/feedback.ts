@@ -82,6 +82,11 @@ feedbackRouter.post("/feedback/analyze", async (req, res) => {
     return;
   }
 
+  if (feedback.length > 10000) {
+    res.status(400).json({ error: "Feedback text is too long (max 10,000 characters)." });
+    return;
+  }
+
   let similarEntries: string[] = [];
   try {
     if (!process.env.PINECONE_API_KEY) {
@@ -180,7 +185,7 @@ Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
     });
 
     const block = message.content[0];
-    if (block.type !== "text") {
+    if (!block || block.type !== "text") {
       res.status(500).json({ error: "Unexpected response format from AI" });
       return;
     }

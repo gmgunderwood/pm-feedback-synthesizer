@@ -30,3 +30,6 @@ externalPort = 8081
 [[ports]]
 localPort = 22890
 externalPort = 3000
+
+[deployment.env]
+PORT = "8080"

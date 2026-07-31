@@ -163,6 +163,8 @@ Priority guidelines:
 - medium: Nice-to-have improvements, minor usability issues
 - low: Cosmetic issues, edge cases, minor requests
 
+Scoping rule for retrieved past feedback: if the user message includes a "RETRIEVED PAST FEEDBACK" section, treat it strictly as background for recognizing recurring patterns (e.g., increasing a theme's "occurrences" count when the same issue was reported before). Do NOT pull details, specifics, or quotes from retrieved past feedback into "executiveSummary", "keyStrengths", "keyWeaknesses", or "quotes" unless the CURRENT submission also states them. The "executiveSummary" and "quotes" fields must describe only what is in the current submission, in the current submission's own words. If a theme's occurrence count is being incremented because of a match found in past feedback, note that explicitly in the theme's "description" (e.g., "also reported in a prior submission") rather than presenting the past feedback's specifics as if the current user said them.
+
 Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
 
   const baseUserMessage = productContext
@@ -171,9 +173,9 @@ Return ONLY valid JSON. No markdown, no explanation, just the JSON object.`;
 
     const userMessage =
     similarEntries.length > 0
-      ? `${baseUserMessage}\n\nSimilar past feedback for context (${similarEntries.length} ${similarEntries.length === 1 ? "entry" : "entries"} retrieved):\n${similarEntries
+      ? `${baseUserMessage}\n\nRETRIEVED PAST FEEDBACK (context only — this was submitted separately in the past, NOT part of the current session above) — ${similarEntries.length} ${similarEntries.length === 1 ? "entry" : "entries"}:\n${similarEntries
           .map((entry, i) => `[${i + 1}] ${entry}`)
-          .join("\n")}\n\nUse the similar past feedback as context if relevant. Do not invent patterns that are not present in the data.`
+          .join("\n")}\n\nUse this only to detect recurring issues and adjust occurrence counts. Never copy specifics from it into the executive summary, key strengths, key weaknesses, or quotes fields unless the current submission independently states the same thing.`
       : baseUserMessage;
 
   try {
